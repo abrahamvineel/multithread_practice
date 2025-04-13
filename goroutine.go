@@ -95,15 +95,21 @@ import (
 	"time"
 )
 
-func tempSensorProd(tempChan <-chan int) int {
-	rand.Seed(time.Now().UnixNano())
-	randomInt := rand.Intn(100)
-	tempChan <- randomInt
-	return randomInt
+func tempSensorProd(tempChan chan<- int) int {
+	for {
+		rand.Seed(time.Now().UnixNano())
+		randomInt := rand.Intn(100)
+		fmt.Printf("Producer generated: %d\n", randomInt)
+		tempChan <- randomInt
+		time.Sleep(time.Second * 1)
+	}
 }
 
-func tempSensorCons(temp int) {
-	fmt.Printf("The current temperature is %d", temp)
+func tempSensorCons(tempChan <-chan int) {
+	for temp := range tempChan {
+		fmt.Printf("Consumer Received the current temperature is %d\n", temp)
+		time.Sleep(time.Millisecond * 500)
+	}
 }
 
 func main() {
@@ -112,5 +118,10 @@ func main() {
 
 	go tempSensorProd(tempChan)
 
-	go tempSensorCons(<-tempChan)
+	go tempSensorCons(tempChan)
+
+	time.Sleep(time.Second * 5)
+	close(tempChan)
+	time.Sleep(time.Second * 1)
+	fmt.Println("Main program finished")
 }

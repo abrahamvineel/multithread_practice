@@ -23,15 +23,22 @@ class WorkerThread1 implements Runnable{
 public class ExecutorServiceExample {
 
     public static void main(String[] args) throws InterruptedException {
-        ExecutorService es = Executors.newFixedThreadPool(3);
+//        ExecutorService es = Executors.newFixedThreadPool(3);
+//
+//        for (int i = 0; i < 5; i++) {
+//            es.execute(new WorkerThread1(i));
+//        }
+//
+//        es.shutdown();
+//        es.awaitTermination(5, TimeUnit.SECONDS);
+//
+//        System.out.println("Main thread is finished");
 
-        for (int i = 0; i < 5; i++) {
-            es.execute(new WorkerThread1(i));
+        int a = 13;
+        if(((a >> 2) & 1) == 1) {
+            System.out.println("set");
+        } else {
+            System.out.println("not set");
         }
-
-        es.shutdown();
-        es.awaitTermination(5, TimeUnit.SECONDS);
-
-        System.out.println("Main thread is finished");
     }
 }
