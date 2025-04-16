@@ -89,39 +89,96 @@ package main
 // 	fmt.Printf("Final counter value: %d", counter.GetCount())
 // }
 
+// import (
+// 	"fmt"
+// 	"math/rand"
+// 	"time"
+// )
+
+// func tempSensorProd(tempChan chan<- int) int {
+// 	for {
+// 		rand.Seed(time.Now().UnixNano())
+// 		randomInt := rand.Intn(100)
+// 		fmt.Printf("Producer generated: %d\n", randomInt)
+// 		tempChan <- randomInt
+// 		time.Sleep(time.Second * 1)
+// 	}
+// }
+
+// func tempSensorCons(tempChan <-chan int) {
+// 	for temp := range tempChan {
+// 		fmt.Printf("Consumer Received the current temperature is %d\n", temp)
+// 		time.Sleep(time.Millisecond * 500)
+// 	}
+// }
+
+// func main() {
+
+// 	tempChan := make(chan int)
+
+// 	go tempSensorProd(tempChan)
+
+// 	go tempSensorCons(tempChan)
+
+// 	time.Sleep(time.Second * 5)
+// 	close(tempChan)
+// 	time.Sleep(time.Second * 1)
+// 	fmt.Println("Main program finished")
+// }
+
 import (
 	"fmt"
 	"math/rand"
+	"runtime"
+	"sync"
 	"time"
 )
 
-func tempSensorProd(tempChan chan<- int) int {
-	for {
-		rand.Seed(time.Now().UnixNano())
-		randomInt := rand.Intn(100)
-		fmt.Printf("Producer generated: %d\n", randomInt)
-		tempChan <- randomInt
-		time.Sleep(time.Second * 1)
-	}
+const arraySize = 1_000_000
+const numWorkers = 4
+
+func doubleEle(index int, value int) int {
+	time.Sleep((time.Duration(rand.Intn(10)) * time.Microsecond))
+	return value * 2
 }
 
-func tempSensorCons(tempChan <-chan int) {
-	for temp := range tempChan {
-		fmt.Printf("Consumer Received the current temperature is %d\n", temp)
-		time.Sleep(time.Millisecond * 500)
+func worker(id int, data []int, results []int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for i, value := range data {
+		results[i] = doubleEle(i, value)
 	}
 }
 
 func main() {
+	fmt.Println("Starting parallel processing of a large array...")
+	fmt.Printf("Number of CPU cores: %d\n", runtime.NumCPU())
+	fmt.Printf("Using %d workers (goroutines)\n", numWorkers)
 
-	tempChan := make(chan int)
+	arr := make([]int, arraySize)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < arraySize; i++ {
+		arr[i] = rand.Intn(100)
+	}
 
-	go tempSensorProd(tempChan)
+	res := make([]int, arraySize)
+	chunkSize := arraySize / numWorkers
 
-	go tempSensorCons(tempChan)
+	startTime := time.Now()
+	var wg sync.WaitGroup
 
-	time.Sleep(time.Second * 5)
-	close(tempChan)
-	time.Sleep(time.Second * 1)
-	fmt.Println("Main program finished")
+	for i := 0; i < numWorkers; i++ {
+		start := i * chunkSize
+		end := (i + 1) * chunkSize
+		if end > arraySize {
+			end = arraySize
+		}
+		wg.Add(1)
+		go worker(i+1, arr[start:end], res[start:end], &wg)
+	}
+
+	wg.Wait()
+	endTime := time.Now()
+	totalTime := endTime.Sub(startTime)
+
+	fmt.Printf("Processing complete. Time taken %s\n", totalTime)
 }
