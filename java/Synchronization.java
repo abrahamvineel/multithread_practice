@@ -80,6 +80,7 @@ class WorkerThread implements Runnable {
 public class Synchronization {
     public static void main(String[] args) throws InterruptedException {
         SharedCounter counter = new SharedCounter();
+
         WorkerThread w1 = new WorkerThread(counter, "increment");
         WorkerThread w2 = new WorkerThread(counter, "decrement");
         WorkerThread w3 = new WorkerThread(counter, "reentrant");
